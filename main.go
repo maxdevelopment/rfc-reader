@@ -40,7 +40,6 @@ func getType() (parser.Parser, error) {
 }
 
 func main() {
-	//test repo sync
 
 	crawlerType, err := getType()
 	if err != nil {
