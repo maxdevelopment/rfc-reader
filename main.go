@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	defaultRfcQuantity       = 100
+	defaultRfcQuantity       = 10
 	defaultRfcQuantityHelper = "quantity RFC for wrapping"
 	//popularWordsQuantity       = 20
 	//popularWordsQuantityHelper = "popular words quantity"
@@ -49,7 +49,4 @@ func main() {
 
 	go extractor.Run()
 	parser.Start(crawlerType)
-
-	var input string
-	fmt.Scanln(&input)
 }

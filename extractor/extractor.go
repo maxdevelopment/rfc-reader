@@ -18,7 +18,7 @@ func Run() {
 			fmt.Println(matches)
 
 		case doneCh := <-DoneCh:
-			fmt.Println(doneCh)
+			fmt.Println("DONE CHANNEL: ",doneCh)
 		}
 	}
 }
