@@ -16,7 +16,7 @@ const (
 	//popularWordsQuantityHelper = "popular words quantity"
 	//popularWordLength          = 4
 	//popularWordLengthHelper    = "popular words minimal length"
-	connectionsQuantity       = 10
+	connectionsQuantity       = 4
 	connectionsQuantityHelper = "connections quantity"
 	parserSource              = "web"
 	parserSourceHelper        = "parser source(web|files|db)"
@@ -46,7 +46,8 @@ func main() {
 		fmt.Println(err)
 		os.Exit(0)
 	}
-
 	go extractor.Run()
+
+
 	parser.Start(crawlerType)
 }

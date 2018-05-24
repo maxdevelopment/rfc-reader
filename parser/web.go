@@ -2,11 +2,11 @@ package parser
 
 import (
 	"fmt"
-	"strconv"
 	"net/http"
 	"io/ioutil"
-	"rfc-reader/extractor"
+	"strconv"
 	"sync"
+	"rfc-reader/extractor"
 )
 
 type webCrawler struct {
@@ -25,9 +25,8 @@ func WebParams(rpcQty int, connQty int) *webCrawler {
 	}
 }
 
-func fetch(url string) (content string, err error) {
-	fmt.Println(url)
-	resp, err := http.Get(url)
+func fetch(link string) (content string, err error) {
+	resp, err := http.Get(link)
 
 	if err != nil {
 		return "", err
@@ -42,48 +41,39 @@ func fetch(url string) (content string, err error) {
 	return string(body), nil
 }
 
-func newConn(crawler *webCrawler, wg *sync.WaitGroup) {
-	fmt.Println("CONN: ")
-	wg.Add(1)
-	defer wg.Done()
+func (crawler *webCrawler) parse() {
 
+	wg := new(sync.WaitGroup)
+	wg.Add(crawler.connQty)
+
+	go func() {
+		for i := 1; i <= crawler.rpcQty; i++ {
+			link := crawler.host + strconv.Itoa(i) + ".txt"
+			crawler.links <- link
+		}
+		close(crawler.links)
+	}()
+
+	for i := 0; i < crawler.connQty; i++ {
+		go worker(i, crawler, wg)
+	}
+
+	wg.Wait()
+}
+
+func worker(i int, crawler *webCrawler, wg *sync.WaitGroup) {
 	for link := range crawler.links {
+
+		fmt.Println("worker", i, "recieved", link)
 
 		body, err := fetch(link)
 		if err != nil {
 			fmt.Errorf("parser error link: %s | error: %v", link, err)
 			return
 		}
-
 		extractor.DataCh <- body
-	}
-}
 
-func (crawler *webCrawler) parse() {
-	wg := new(sync.WaitGroup)
-	for i := 0; i <= crawler.connQty; i++ {
-		fmt.Println("CONN: ", i)
-		go newConn(crawler, wg)
-		//go func() {
-		//	wg.Add(1)
-		//	defer wg.Done()
-		//	for link := range crawler.links {
-		//
-		//		body, err := fetch(link)
-		//		if err != nil {
-		//			fmt.Errorf("parser error link: %s | error: %v", link, err)
-		//			return
-		//		}
-		//
-		//		extractor.DataCh <- body
-		//	}
-		//}()
 	}
-	wg.Wait()
-
-	for i := 1; i <= crawler.rpcQty; i++ {
-		fmt.Println("num: ", i)
-		link := crawler.host + strconv.Itoa(i) + ".txt"
-		crawler.links <- link
-	}
+	fmt.Println("worker", i, "done")
+	wg.Done()
 }
