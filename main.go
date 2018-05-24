@@ -7,10 +7,11 @@ import (
 	"flag"
 	"os"
 	"rfc-reader/extractor"
+	"sync"
 )
 
 const (
-	defaultRfcQuantity       = 10
+	defaultRfcQuantity       = 3
 	defaultRfcQuantityHelper = "quantity RFC for wrapping"
 	//popularWordsQuantity       = 20
 	//popularWordsQuantityHelper = "popular words quantity"
@@ -46,8 +47,14 @@ func main() {
 		fmt.Println(err)
 		os.Exit(0)
 	}
-	go extractor.Run()
 
+	wg := new(sync.WaitGroup)
+	wg.Add(defaultRfcQuantity)
 
-	parser.Start(crawlerType)
+	extractor.Run(wg)
+
+	parser.Start(crawlerType, wg)
+
+	wg.Wait()
+
 }

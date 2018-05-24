@@ -3,28 +3,25 @@ package extractor
 import (
 	"fmt"
 	"regexp"
+	"sync"
 )
 
 var DataCh = make(chan string)
 
-func Run() {
-	fmt.Println("Extractor RUN")
-	for {
-		select {
-		case dataCh := <-DataCh:
+func Run(wg *sync.WaitGroup) {
+	go func(wg *sync.WaitGroup) {
+
+		for body := range DataCh {
+			fmt.Println("RECEIVED")
 
 			r := regexp.MustCompile(`\w{4,}`)
-			matches := r.FindAllString(dataCh, -1)
+			matches := r.FindAllString(body, -1)
 			fmt.Println(len(matches))
 			fmt.Println(matches)
 
-		//case doneCh := <-DoneCh:
-		//	if doneCh {
-		//		close(DataCh)
-		//		close(DoneCh)
-		//	}
-		//default:
-		//	fmt.Println("nothing ready")
+			wg.Done()
+
 		}
-	}
+	}(wg)
+
 }

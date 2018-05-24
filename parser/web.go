@@ -41,9 +41,9 @@ func fetch(link string) (content string, err error) {
 	return string(body), nil
 }
 
-func (crawler *webCrawler) parse() {
+func (crawler *webCrawler) parse(wg *sync.WaitGroup) {
 
-	wg := new(sync.WaitGroup)
+	//wg := new(sync.WaitGroup)
 	wg.Add(crawler.connQty)
 
 	go func() {
@@ -58,7 +58,7 @@ func (crawler *webCrawler) parse() {
 		go worker(i, crawler, wg)
 	}
 
-	wg.Wait()
+	//wg.Wait()
 }
 
 func worker(i int, crawler *webCrawler, wg *sync.WaitGroup) {
@@ -71,6 +71,7 @@ func worker(i int, crawler *webCrawler, wg *sync.WaitGroup) {
 			fmt.Errorf("parser error link: %s | error: %v", link, err)
 			return
 		}
+
 		extractor.DataCh <- body
 
 	}
