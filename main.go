@@ -56,5 +56,9 @@ func main() {
 	parser.Start(crawlerType, wg)
 
 	wg.Wait()
-
+	defer func() {
+		fmt.Println("ENDED")
+		fmt.Println(extractor.Result)
+		//61,27,27,26,24
+	}()
 }
