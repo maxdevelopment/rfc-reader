@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"sync"
-	"rfc-reader/extractor"
+	"github.com/maxdevelopment/rfc-reader/extractor"
 )
 
 type webCrawler struct {

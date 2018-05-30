@@ -1,12 +1,12 @@
 package main
 
 import (
-	"rfc-reader/parser"
+	"github.com/maxdevelopment/rfc-reader/parser"
 	"fmt"
 	"errors"
 	"flag"
 	"os"
-	"rfc-reader/extractor"
+	"github.com/maxdevelopment/rfc-reader/extractor"
 	"sync"
 )
 
