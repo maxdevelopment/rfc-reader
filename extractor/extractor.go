@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"sync"
+	s "strings"
 )
 
 type extractor struct {
@@ -12,12 +13,13 @@ type extractor struct {
 
 func (ex *extractor) sort() bool {
 	for _, word := range ex.words {
-		fmt.Println(word)
+		result[s.ToLower(word)] ++
 	}
 
 	return true
 }
 
+var result = make(map[string]int)
 var DataCh = make(chan string)
 var wordsCh = make(chan extractor)
 
