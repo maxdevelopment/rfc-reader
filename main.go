@@ -1,22 +1,23 @@
 package main
 
 import (
-	"rfc-reader/parser"
+	"github.com/maxdevelopment/rfc-reader/parser"
 	"fmt"
 	"errors"
 	"flag"
 	"os"
-	"rfc-reader/extractor"
+	"github.com/maxdevelopment/rfc-reader/extractor"
+	"sync"
 )
 
 const (
-	defaultRfcQuantity       = 100
+	defaultRfcQuantity       = 3
 	defaultRfcQuantityHelper = "quantity RFC for wrapping"
 	//popularWordsQuantity       = 20
 	//popularWordsQuantityHelper = "popular words quantity"
 	//popularWordLength          = 4
 	//popularWordLengthHelper    = "popular words minimal length"
-	connectionsQuantity       = 10
+	connectionsQuantity       = 4
 	connectionsQuantityHelper = "connections quantity"
 	parserSource              = "web"
 	parserSourceHelper        = "parser source(web|files|db)"
@@ -47,9 +48,13 @@ func main() {
 		os.Exit(0)
 	}
 
-	go extractor.Run()
-	parser.Start(crawlerType)
+	wg := new(sync.WaitGroup)
+	wg.Add(defaultRfcQuantity)
 
-	var input string
-	fmt.Scanln(&input)
+	extractor.Run(wg)
+
+	parser.Start(crawlerType, wg)
+
+	wg.Wait()
+
 }

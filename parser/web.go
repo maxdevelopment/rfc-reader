@@ -2,10 +2,11 @@ package parser
 
 import (
 	"fmt"
-	"strconv"
 	"net/http"
 	"io/ioutil"
-	"rfc-reader/extractor"
+	"strconv"
+	"sync"
+	"github.com/maxdevelopment/rfc-reader/extractor"
 )
 
 type webCrawler struct {
@@ -24,36 +25,56 @@ func WebParams(rpcQty int, connQty int) *webCrawler {
 	}
 }
 
-func (crawler *webCrawler) parse() {
+func fetch(link string) (content string, err error) {
+	resp, err := http.Get(link)
 
-	for i := 0; i <= crawler.connQty; i++ {
-		go func() {
-			for link := range crawler.links {
-				fmt.Println(link)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
 
-				resp, err := http.Get(link)
-				if resp != nil {
-					defer resp.Body.Close()
-				}
-
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-
-				body, err := ioutil.ReadAll(resp.Body)
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-
-				extractor.DataCh <- string(body)
-			}
-		}()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
 	}
 
-	for i := 1; i <= crawler.rpcQty; i++ {
-		link := crawler.host + strconv.Itoa(i) + ".txt"
-		crawler.links <- link
+	return string(body), nil
+}
+
+func (crawler *webCrawler) parse(wg *sync.WaitGroup) {
+
+	//wg := new(sync.WaitGroup)
+	wg.Add(crawler.connQty)
+
+	go func() {
+		for i := 1; i <= crawler.rpcQty; i++ {
+			link := crawler.host + strconv.Itoa(i) + ".txt"
+			crawler.links <- link
+		}
+		close(crawler.links)
+	}()
+
+	for i := 0; i < crawler.connQty; i++ {
+		go worker(i, crawler, wg)
 	}
+
+	//wg.Wait()
+}
+
+func worker(i int, crawler *webCrawler, wg *sync.WaitGroup) {
+	for link := range crawler.links {
+
+		fmt.Println("worker", i, "recieved", link)
+
+		body, err := fetch(link)
+		if err != nil {
+			fmt.Errorf("parser error link: %s | error: %v", link, err)
+			return
+		}
+
+		extractor.DataCh <- body
+
+	}
+	fmt.Println("worker", i, "done")
+	wg.Done()
 }
