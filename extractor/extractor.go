@@ -6,15 +6,54 @@ import (
 	"sync"
 	s "strings"
 	"sort"
+	"strconv"
 )
+
+var PopWordsQty int
+var WordLength int
+
+var Rep = report{
+	result: make(map[string]int),
+}
+var DataCh = make(chan string)
+var wordsCh = make(chan extractor)
+
+type result struct {
+	key   string
+	value int
+}
+
+func sortMap(m map[string]int) []result {
+	var res []result
+	for k, v := range m {
+		res = append(res, result{k, v})
+	}
+	sort.Slice(res, func(i, j int) bool {
+		return res[i].value > res[j].value
+	})
+
+	return res
+}
 
 type extractor struct {
 	words []string
 }
 
-type result struct {
-	key   string
-	value int
+func (ex *extractor) prepare() bool {
+
+	for _, word := range ex.words {
+		Rep.result[s.ToLower(word)] ++
+	}
+
+	sc := sortMap(Rep.result)
+
+	Rep.clearMap()
+
+	for _, v := range sc[:PopWordsQty] {
+		Rep.result[v.key] = v.value
+	}
+
+	return true
 }
 
 type report struct {
@@ -28,54 +67,18 @@ func (r *report) clearMap() {
 }
 
 func (r *report) GetReport() {
-	rep := sortAndCut(r.result)
+	rep := sortMap(r.result)
 	for k, v := range rep {
 		fmt.Printf("%d %s [ %d ]\n", k, v.key, v.value)
 	}
 }
-
-var Rep = report{
-	result: make(map[string]int),
-}
-
-func sortAndCut(m map[string]int) []result {
-	var res []result
-	for k, v := range m {
-		res = append(res, result{k, v})
-	}
-	sort.Slice(res, func(i, j int) bool {
-		return res[i].value > res[j].value
-	})
-
-	return res
-}
-
-func (ex *extractor) sort() bool {
-
-	for _, word := range ex.words {
-		Rep.result[s.ToLower(word)] ++
-	}
-
-	sc := sortAndCut(Rep.result)
-
-	Rep.clearMap()
-
-	for _, v := range sc[:20] {
-		Rep.result[v.key] = v.value
-	}
-
-	return true
-}
-
-var DataCh = make(chan string)
-var wordsCh = make(chan extractor)
 
 func Run(wg *sync.WaitGroup) {
 	go extract(wg)
 	go func() {
 
 		for body := range DataCh {
-			r := regexp.MustCompile(`\w{4,}`)
+			r := regexp.MustCompile(`\w{` + strconv.Itoa(WordLength) + `,}`)
 			matches := r.FindAllString(body, -1)
 			wordsCh <- extractor{
 				words: matches,
@@ -86,7 +89,7 @@ func Run(wg *sync.WaitGroup) {
 
 func extract(wg *sync.WaitGroup) {
 	for ex := range wordsCh {
-		if ex.sort() {
+		if ex.prepare() {
 			wg.Done()
 		}
 	}
