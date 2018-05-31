@@ -57,8 +57,6 @@ func main() {
 
 	wg.Wait()
 	defer func() {
-		fmt.Println("ENDED")
-		fmt.Println(extractor.Result)
-		//61,27,27,26,24
+		extractor.Rep.GetReport()
 	}()
 }

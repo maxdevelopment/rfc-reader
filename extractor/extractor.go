@@ -13,51 +13,60 @@ type extractor struct {
 }
 
 type result struct {
-	key string
+	key   string
 	value int
 }
 
-var res []result
-var m = make(map[string]int)
+type report struct {
+	result map[string]int
+}
 
-func (ex *extractor) sort() bool {
-
-	//m := make(map[string]int)
-
-	for _, word := range ex.words {
-		m[s.ToLower(word)] ++
+func (r *report) clearMap() {
+	for key := range r.result {
+		delete(r.result, key)
 	}
+}
 
-	//type kv struct {
-	//	Key   string
-	//	Value int
-	//}
-	//
-	//var ss []kv
+func (r *report) GetReport() {
+	rep := sortAndCut(r.result)
+	for k, v := range rep {
+		fmt.Printf("%d %s [ %d ]\n", k, v.key, v.value)
+	}
+}
+
+var Rep = report{
+	result: make(map[string]int),
+}
+
+func sortAndCut(m map[string]int) []result {
+	var res []result
 	for k, v := range m {
 		res = append(res, result{k, v})
 	}
-	fmt.Println(res)
-
 	sort.Slice(res, func(i, j int) bool {
 		return res[i].value > res[j].value
 	})
 
-	//fmt.Println(res)
-	res := res[:10]
-	fmt.Println(res)
+	return res
+}
 
+func (ex *extractor) sort() bool {
 
-	//fmt.Println("PRINT")
-	//for _, kv := range res {
-	//	fmt.Printf("%s, %d\n", kv.key, kv.value)
-	//	Result[kv.key] = kv.value
-	//}
+	for _, word := range ex.words {
+		Rep.result[s.ToLower(word)] ++
+	}
+
+	sc := sortAndCut(Rep.result)
+
+	Rep.clearMap()
+
+	for _, v := range sc[:20] {
+		Rep.result[v.key] = v.value
+	}
 
 	return true
 }
 
-var Result = make(map[string]int)
 var DataCh = make(chan string)
 var wordsCh = make(chan extractor)
 
@@ -66,8 +75,6 @@ func Run(wg *sync.WaitGroup) {
 	go func() {
 
 		for body := range DataCh {
-			fmt.Println("RECEIVED")
-
 			r := regexp.MustCompile(`\w{4,}`)
 			matches := r.FindAllString(body, -1)
 			wordsCh <- extractor{
