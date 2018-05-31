@@ -16,7 +16,7 @@ type webCrawler struct {
 	links   chan string
 }
 
-func WebParams(rpcQty int, connQty int) *webCrawler {
+func WebParams(rpcQty, connQty int) *webCrawler {
 	return &webCrawler{
 		"https://tools.ietf.org/rfc/rfc",
 		rpcQty,
@@ -43,7 +43,6 @@ func fetch(link string) (content string, err error) {
 
 func (crawler *webCrawler) parse(wg *sync.WaitGroup) {
 
-	//wg := new(sync.WaitGroup)
 	wg.Add(crawler.connQty)
 
 	go func() {
@@ -57,8 +56,6 @@ func (crawler *webCrawler) parse(wg *sync.WaitGroup) {
 	for i := 0; i < crawler.connQty; i++ {
 		go worker(i, crawler, wg)
 	}
-
-	//wg.Wait()
 }
 
 func worker(i int, crawler *webCrawler, wg *sync.WaitGroup) {

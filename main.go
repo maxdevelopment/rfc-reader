@@ -11,25 +11,28 @@ import (
 )
 
 const (
-	defaultRfcQuantity       = 3
-	defaultRfcQuantityHelper = "quantity RFC for wrapping"
-	//popularWordsQuantity       = 20
-	//popularWordsQuantityHelper = "popular words quantity"
-	//popularWordLength          = 4
-	//popularWordLengthHelper    = "popular words minimal length"
-	connectionsQuantity       = 4
-	connectionsQuantityHelper = "connections quantity"
-	parserSource              = "web"
-	parserSourceHelper        = "parser source(web|files|db)"
+	defaultRfcQuantity         = 1000
+	defaultRfcQuantityHelper   = "quantity RFC for wrapping"
+	popularWordsQuantity       = 20
+	popularWordsQuantityHelper = "popular words quantity"
+	popularWordLength          = 4
+	popularWordLengthHelper    = "popular words minimal length"
+	connectionsQuantity        = 4
+	connectionsQuantityHelper  = "connections quantity"
+	parserSource               = "web"
+	parserSourceHelper         = "parser source(web|files|db)"
 )
 
 func getType() (parser.Parser, error) {
 	rpcQty := flag.Int("rpcQty", defaultRfcQuantity, defaultRfcQuantityHelper)
-	////popWordsQty := flag.Int("wordsQty", popularWordsQuantity, popularWordsQuantityHelper)
-	////wordLength := flag.Int("wordLen", popularWordLength, popularWordLengthHelper)
+	popWordsQty := flag.Int("wordsQty", popularWordsQuantity, popularWordsQuantityHelper)
+	wordLength := flag.Int("wordLen", popularWordLength, popularWordLengthHelper)
 	connQty := flag.Int("connQty", connectionsQuantity, connectionsQuantityHelper)
 	parserSrc := flag.String("src", parserSource, parserSourceHelper)
 	flag.Parse()
+
+	extractor.PopWordsQty = *popWordsQty
+	extractor.WordLength = *wordLength
 
 	switch *parserSrc {
 	case "web":
@@ -56,5 +59,7 @@ func main() {
 	parser.Start(crawlerType, wg)
 
 	wg.Wait()
-
+	defer func() {
+		extractor.Rep.GetReport()
+	}()
 }
